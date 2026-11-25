@@ -1,616 +1,1209 @@
-[esme nuvv.html](https://github.com/user-attachments/files/35311128/esme.nuvv.html)
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>pa la mas nuvvv 💜</title>
-    <!-- Tailwind CSS para diseño responsivo y utilidades -->
+    <title>Para la más pro ✨</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fuentes redondeadas y tiernas de Google Fonts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Configuración de fuentes y fondo base */
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        body, html {
+        html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Fredoka', 'Quicksand', sans-serif;
-            /* Degradado nocturno en tonos morado profundo, violeta oscuro y índigo */
-            background: radial-gradient(circle at 50% 35%, #2e104d 0%, #1a0730 55%, #0c0317 100%);
+            background: radial-gradient(circle at 50% 45%, #1f0618 0%, #12030e 55%, #090208 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #fff5fa;
         }
 
-        /* Canvas de fuegos artificiales en pantalla completa */
-        #fireworksCanvas {
+        #scene-container {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            z-index: 10;
-            pointer-events: auto;
+            z-index: 1;
+            cursor: grab;
         }
 
-        /* Capa de gatitos flotantes en el fondo */
-        #kittyLayer {
+        #scene-container:active {
+            cursor: grabbing;
+        }
+
+        #labels-layer {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: 5;
             pointer-events: none;
             overflow: hidden;
         }
 
-        /* Animación de flotación suave para los gatitos SVG */
-        .floating-kitty {
+        .planet-label {
             position: absolute;
-            will-change: transform;
-            filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.4));
-            animation: floatKitty var(--duration, 12s) ease-in-out infinite alternate;
+            top: 0;
+            left: 0;
+            transform: translate3d(-50%, -100%, 0) scale(0.7);
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            will-change: transform, opacity;
+            transition: opacity 0.45s ease;
         }
 
-        @keyframes floatKitty {
-            0% {
-                transform: translate(0, 0) rotate(var(--rot-start, -8deg)) scale(var(--scale, 1));
-            }
-            50% {
-                transform: translate(var(--tx-mid, 20px), var(--ty-mid, -30px)) rotate(var(--rot-mid, 5deg)) scale(calc(var(--scale, 1) * 1.04));
-            }
-            100% {
-                transform: translate(var(--tx-end, -15px), var(--ty-end, -60px)) rotate(var(--rot-end, 10deg)) scale(var(--scale, 1));
-            }
+        .planet-connector {
+            width: 1px;
+            height: 14px;
+            background: linear-gradient(to bottom, rgba(255, 133, 208, 0.85), rgba(255, 133, 208, 0.05));
+            margin-top: 3px;
         }
 
-        /* Contenedor central que permite hacer clic a través de él excepto en la tarjeta */
-        .center-stage {
+        .quality-badge {
+            padding: 5px 14px;
+            border-radius: 999px;
+            background: rgba(31, 6, 24, 0.68);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 105, 180, 0.55);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 59, 154, 0.42);
+            color: #ffe4f3;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            text-shadow: 0 1px 8px rgba(255, 105, 180, 0.75);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .planet-label.active-focus .quality-badge {
+            border-color: rgba(253, 230, 138, 0.9);
+            box-shadow: 0 0 26px rgba(255, 59, 154, 0.78), 0 0 14px rgba(253, 230, 138, 0.55);
+            transform: scale(1.08);
+        }
+
+        /* Mensaje final cinematográfico */
+        #climax-overlay {
             position: fixed;
             inset: 0;
-            z-index: 20;
+            z-index: 10;
+            pointer-events: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 1.5rem;
-            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.92);
+            transition: opacity 2.2s cubic-bezier(0.16, 1, 0.3, 1), transform 2.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Tarjeta principal con estilo Kawaii / Gamer */
-        .kawaii-card {
-            position: relative;
-            pointer-events: auto;
-            background: rgba(255, 240, 247, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 4px solid #ff85c0;
-            border-radius: 2.5rem;
-            box-shadow: 
-                0 0 35px rgba(255, 77, 166, 0.65),
-                0 15px 35px rgba(0, 0, 0, 0.45),
-                inset 0 0 20px rgba(255, 182, 217, 0.8);
-        /* Tarjeta principal con estilo Kawaii en tonos morados/lila */
-        .kawaii-card {
-            position: relative;
-            pointer-events: auto;
-            background: rgba(243, 232, 255, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 4px solid #c084fc;
-            border-radius: 2.5rem;
-            box-shadow: 
-                0 0 35px rgba(168, 85, 247, 0.65),
-                0 15px 35px rgba(0, 0, 0, 0.55),
-                inset 0 0 20px rgba(216, 180, 254, 0.85);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-            animation: cardBreath 3.5s ease-in-out infinite;
-            cursor: pointer;
+        #climax-overlay.show {
+            opacity: 1;
+            transform: scale(1);
         }
 
-        .kawaii-card:hover {
-            transform: scale(1.04) translateY(-4px);
-        }
-
-        .kawaii-card:active {
-            transform: scale(0.96);
-        }
-
-        @keyframes cardBreath {
-            0%, 100% {
-                box-shadow: 
-                    0 0 30px rgba(168, 85, 247, 0.6),
-                    0 15px 35px rgba(0, 0, 0, 0.55),
-                    inset 0 0 18px rgba(216, 180, 254, 0.75);
-            }
-            50% {
-                box-shadow: 
-                    0 0 55px rgba(192, 132, 252, 0.95),
-                    0 0 85px rgba(233, 213, 255, 0.45),
-                    0 18px 40px rgba(0, 0, 0, 0.6),
-                    inset 0 0 25px rgba(216, 180, 254, 0.95);
-            }
-        }
-
-        /* Orejitas de gatito superiores en la tarjeta */
-        .ear-left, .ear-right {
-            position: absolute;
-            top: -32px;
-            width: 58px;
-            height: 54px;
-            background: #f3e8ff;
-            border: 4px solid #c084fc;
-            z-index: -1;
-        }
-
-        .ear-left {
-            left: 26px;
-            border-radius: 65% 25% 10% 10%;
-            transform: rotate(-16deg);
-        }
-
-        .ear-right {
-            right: 26px;
-            border-radius: 25% 65% 10% 10%;
-            transform: rotate(16deg);
-        }
-
-        /* Interior lila de las orejitas */
-        .ear-left::after, .ear-right::after {
-            content: '';
-            position: absolute;
-            top: 9px;
-            width: 28px;
-            height: 26px;
-            background: #d8b4fe;
-            border-radius: 50% 50% 15% 15%;
-        }
-
-        .ear-left::after { left: 9px; }
-        .ear-right::after { right: 9px; }
-
-        /* Texto principal "pa la mas nuvvv" con brillo violeta neón */
-        .neon-kawaii-text {
-            background: linear-gradient(135deg, #7e22ce 0%, #a855f7 50%, #6b21a8 100%);
+        .climax-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 0%, #ffd6ec 30%, #ff7ac6 65%, #fde68a 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 10px rgba(168, 85, 247, 0.45));
-            animation: textPulse 2.2s ease-in-out infinite;
+            filter: drop-shadow(0 0 28px rgba(255, 59, 154, 0.85)) drop-shadow(0 4px 18px rgba(15, 2, 12, 0.95));
+            animation: gentleHover 5s ease-in-out infinite;
         }
 
-        @keyframes textPulse {
-            0%, 100% {
-                transform: scale(1);
-                filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4));
-            }
-            50% {
-                transform: scale(1.03);
-                filter: drop-shadow(0 0 18px rgba(192, 132, 252, 0.85));
-            }
+        @keyframes gentleHover {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-7px); }
         }
 
-        /* Estrellitas parpadeantes en el fondo */
-        .twinkle-star {
-            position: absolute;
-            border-radius: 50%;
-            background: #f3e8ff;
-            animation: twinkle var(--twinkle-dur, 3s) ease-in-out infinite;
+        /* Botón discreto en esquina */
+        #replay-btn {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            z-index: 20;
+            padding: 0.45rem 0.95rem;
+            border-radius: 999px;
+            background: rgba(31, 6, 24, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 133, 208, 0.32);
+            color: rgba(255, 228, 243, 0.82);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
         }
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.2; transform: scale(0.8); }
-            50% { opacity: 0.95; transform: scale(1.3); }
+        #replay-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #replay-btn:hover {
+            background: rgba(157, 23, 77, 0.65);
+            border-color: rgba(255, 154, 213, 0.7);
+            color: #ffffff;
         }
     </style>
 </head>
 <body>
 
-    <!-- Capa de fondo con estrellitas y gatitos estilo Hello Kitty flotando -->
-    <div id="kittyLayer" aria-hidden="true"></div>
+    <div id="scene-container"></div>
+    <div id="labels-layer"></div>
 
-    <!-- Canvas interactivo para fuegos artificiales en tonos rosas, magenta, dorado y pastel -->
-    <canvas id="fireworksCanvas"></canvas>
+    <div id="climax-overlay">
+        <h1 class="climax-title text-3xl sm:text-5xl md:text-6xl tracking-wide max-w-4xl">
+            te quiero proo la mas pro
+        </h1>
+    </div>
 
-    <!-- Escenario central con la tarjeta principal -->
-    <main class="center-stage">
-        <div id="mainCard" class="kawaii-card px-8 py-8 sm:px-14 sm:py-11 max-w-[92vw] sm:max-w-xl text-center">
-            <!-- Orejitas de gatito -->
-            <div class="ear-left"></div>
-            <div class="ear-right"></div>
-
-            <!-- Moño morado clásico en la oreja derecha -->
-            <div class="absolute -top-7 right-5 sm:right-6 w-16 h-12 pointer-events-none transform rotate-12 drop-shadow-md">
-                <svg viewBox="0 0 100 70" class="w-full h-full">
-                    <!-- Ala izquierda del moño -->
-                    <path d="M45 35 C20 5, 2 15, 8 35 C2 55, 20 65, 45 35 Z" fill="#9333ea" stroke="#4c1d95" stroke-width="4"/>
-                    <!-- Ala derecha del moño -->
-                    <path d="M55 35 C80 5, 98 15, 92 35 C98 55, 80 65, 55 35 Z" fill="#9333ea" stroke="#4c1d95" stroke-width="4"/>
-                    <!-- Pliegues internos -->
-                    <path d="M36 35 C24 23, 18 28, 18 35 C18 42, 24 47, 36 35 Z" fill="#c084fc"/>
-                    <path d="M64 35 C76 23, 82 28, 82 35 C82 42, 76 47, 64 35 Z" fill="#c084fc"/>
-                    <!-- Centro del moño -->
-                    <ellipse cx="50" cy="35" rx="12" ry="13" fill="#a855f7" stroke="#4c1d95" stroke-width="4"/>
-                </svg>
-            </div>
-
-            <!-- Texto principal único solicitado en el centro -->
-            <h1 class="neon-kawaii-text text-4xl sm:text-6xl font-bold tracking-tight leading-tight">
-                pa la mas nuvvv
-            </h1>
-        </div>
-    </main>
+    <button id="replay-btn" type="button">Repetir</button>
 
     <script>
-        /**
-         * 1. GENERACIÓN DE GATITOS ESTILO HELLO KITTY Y ESTRELLAS EN EL FONDO
-         */
-        const kittyLayer = document.getElementById('kittyLayer');
-
-        // Plantilla SVG de gatito blanco tierno con moño morado/lila y bigotes
-        function createKittySVG(bowColor = '#9333ea', innerBow = '#d8b4fe') {
-            return `
-                <svg viewBox="0 0 140 120" class="w-full h-full overflow-visible">
-                    <!-- Oreja izquierda -->
-                    <path d="M28 48 L22 14 L52 32 Z" fill="#ffffff" stroke="#d8b4fe" stroke-width="3.5" stroke-linejoin="round"/>
-                    <!-- Oreja derecha -->
-                    <path d="M112 48 L118 14 L88 32 Z" fill="#ffffff" stroke="#d8b4fe" stroke-width="3.5" stroke-linejoin="round"/>
-                    
-                    <!-- Cabeza ovalada -->
-                    <ellipse cx="70" cy="68" rx="48" ry="38" fill="#ffffff" stroke="#d8b4fe" stroke-width="3.5"/>
-                    
-                    <!-- Mejillas sonrojadas en tono lila -->
-                    <ellipse cx="42" cy="76" rx="7" ry="4.5" fill="#e9d5ff" opacity="0.9"/>
-                    <ellipse cx="98" cy="76" rx="7" ry="4.5" fill="#e9d5ff" opacity="0.9"/>
-                    
-                    <!-- Ojitos oscuros ovalados -->
-                    <ellipse cx="48" cy="67" rx="4.2" ry="5.8" fill="#240b36"/>
-                    <ellipse cx="92" cy="67" rx="4.2" ry="5.8" fill="#240b36"/>
-                    <!-- Brillo en los ojos -->
-                    <circle cx="46.5" cy="65" r="1.5" fill="#ffffff"/>
-                    <circle cx="90.5" cy="65" r="1.5" fill="#ffffff"/>
-                    
-                    <!-- Naricita amarilla -->
-                    <ellipse cx="70" cy="74" rx="5.2" ry="3.6" fill="#ffd13b" stroke="#e09f00" stroke-width="1.5"/>
-                    
-                    <!-- Bigotes izquierdos -->
-                    <line x1="12" y1="62" x2="29" y2="65" stroke="#4c1d95" stroke-width="2.8" stroke-linecap="round"/>
-                    <line x1="10" y1="73" x2="28" y2="73" stroke="#4c1d95" stroke-width="2.8" stroke-linecap="round"/>
-                    <line x1="14" y1="84" x2="30" y2="80" stroke="#4c1d95" stroke-width="2.8" stroke-linecap="round"/>
-                    
-                    <!-- Bigotes derechos -->
-                    <line x1="128" y1="62" x2="111" y2="65" stroke="#4c1d95" stroke-width="2.8" stroke-linecap="round"/>
-                    <line x1="130" y1="73" x2="112" y2="73" stroke="#4c1d95" stroke-width="2.8" stroke-linecap="round"/>
-                    <line x1="126" y1="84" x2="110" y2="80" stroke="#4c1d95" stroke-width="2.8" stroke-linecap="round"/>
-                    
-                    <!-- Moño icónico en la oreja derecha -->
-                    <g transform="translate(96, 26) rotate(22)">
-                        <path d="M-4 0 C-20 -16, -30 -6, -24 4 C-30 14, -20 24, -4 8 Z" fill="${bowColor}" stroke="#3b0764" stroke-width="2.5"/>
-                        <path d="M4 0 C20 -16, 30 -6, 24 4 C30 14, 20 24, 4 8 Z" fill="${bowColor}" stroke="#3b0764" stroke-width="2.5"/>
-                        <circle cx="0" cy="4" r="7" fill="${innerBow}" stroke="#3b0764" stroke-width="2.5"/>
-                    </g>
-                </svg>
-            `;
-        }
-
-        function populateBackground() {
-            kittyLayer.innerHTML = '';
-            const isMobile = window.innerWidth < 640;
-            const kittyCount = isMobile ? 12 : 22;
-            const starCount = isMobile ? 35 : 65;
-
-            // Crear estrellitas titilantes
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'twinkle-star';
-                const size = Math.random() * 3.5 + 1.5;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.setProperty('--twinkle-dur', `${Math.random() * 3 + 2}s`);
-                star.style.animationDelay = `${Math.random() * 4}s`;
-                kittyLayer.appendChild(star);
+        const PLANETS_DATA = [
+            {
+                quality: 'por nuub',
+                orbitRadius: 15.5,
+                size: 1.18,
+                speed: 0.52,
+                startAngle: 0.3,
+                headTint: 0xffffff,
+                bowColor: 0xff3b9a,
+                bowCenter: 0xffb3da,
+                atmosphere: 0xff85d0
+            },
+            {
+                quality: 'por linda',
+                orbitRadius: 22.5,
+                size: 1.52,
+                speed: 0.41,
+                startAngle: 2.1,
+                headTint: 0xfff5fa,
+                bowColor: 0xff69b4,
+                bowCenter: 0xffe4f3,
+                atmosphere: 0xff9ad5
+            },
+            {
+                quality: 'por ñeñeñe',
+                orbitRadius: 30.5,
+                size: 1.72,
+                speed: 0.34,
+                startAngle: 4.0,
+                headTint: 0xffffff,
+                bowColor: 0xe11d48,
+                bowCenter: 0xfda4af,
+                atmosphere: 0xff66b2,
+                hasHeartMoon: true
+            },
+            {
+                quality: 'por hacerme reír siempre',
+                orbitRadius: 39,
+                size: 1.42,
+                speed: 0.28,
+                startAngle: 1.1,
+                headTint: 0xfff0f7,
+                bowColor: 0xd946ef,
+                bowCenter: 0xf5d0fe,
+                atmosphere: 0xf472b6
+            },
+            {
+                quality: 'por tu vibra única',
+                orbitRadius: 51.5,
+                size: 2.65,
+                speed: 0.20,
+                startAngle: 5.1,
+                headTint: 0xffffff,
+                bowColor: 0xc026d3,
+                bowCenter: 0xf0abfc,
+                atmosphere: 0xff9ad5,
+                hasStarCrown: true
+            },
+            {
+                quality: 'por ser tan auténtica',
+                orbitRadius: 66.5,
+                size: 2.35,
+                speed: 0.15,
+                startAngle: 3.0,
+                headTint: 0xfff7fb,
+                bowColor: 0xf43f5e,
+                bowCenter: 0xfde68a,
+                atmosphere: 0xfde68a,
+                hasRings: true
+            },
+            {
+                quality: 'por estar siempre ahí',
+                orbitRadius: 80.5,
+                size: 1.95,
+                speed: 0.11,
+                startAngle: 0.8,
+                headTint: 0xfdf2f8,
+                bowColor: 0xa855f7,
+                bowCenter: 0xe9d5ff,
+                atmosphere: 0xf0abfc
+            },
+            {
+                quality: 'por brillar sin intentarlo',
+                orbitRadius: 93.5,
+                size: 1.9,
+                speed: 0.085,
+                startAngle: 4.6,
+                headTint: 0xffffff,
+                bowColor: 0xff1493,
+                bowCenter: 0xfde68a,
+                atmosphere: 0xff85d0
             }
-
-            // Paleta de moños morados y lilas
-            const bowPalettes = [
-                ['#9333ea', '#d8b4fe'],
-                ['#a855f7', '#e9d5ff'],
-                ['#7e22ce', '#c084fc'],
-                ['#c084fc', '#f3e8ff']
-            ];
-
-            // Distribuir gatitos en cuadrícula con desplazamiento aleatorio
-            const cols = isMobile ? 3 : 5;
-            const rows = Math.ceil(kittyCount / cols);
-
-            for (let i = 0; i < kittyCount; i++) {
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-
-                const kitty = document.createElement('div');
-                kitty.className = 'floating-kitty';
-
-                const size = isMobile ? (Math.random() * 28 + 46) : (Math.random() * 38 + 56);
-                kitty.style.width = `${size}px`;
-                kitty.style.height = `${size * 0.85}px`;
-
-                const cellW = 100 / cols;
-                const cellH = 100 / rows;
-                const left = col * cellW + Math.random() * (cellW * 0.65);
-                const top = row * cellH + Math.random() * (cellH * 0.65);
-
-                kitty.style.left = `${left}%`;
-                kitty.style.top = `${top}%`;
-                kitty.style.opacity = (Math.random() * 0.35 + 0.45).toFixed(2);
-
-                // Variables CSS personalizadas para movimiento orgánico
-                const duration = (Math.random() * 7 + 8).toFixed(1);
-                kitty.style.setProperty('--duration', `${duration}s`);
-                kitty.style.setProperty('--rot-start', `${(Math.random() * 24 - 12).toFixed(0)}deg`);
-                kitty.style.setProperty('--rot-mid', `${(Math.random() * 24 - 12).toFixed(0)}deg`);
-                kitty.style.setProperty('--rot-end', `${(Math.random() * 24 - 12).toFixed(0)}deg`);
-                kitty.style.setProperty('--tx-mid', `${(Math.random() * 40 - 20).toFixed(0)}px`);
-                kitty.style.setProperty('--ty-mid', `${(Math.random() * 40 - 20).toFixed(0)}px`);
-                kitty.style.setProperty('--tx-end', `${(Math.random() * 50 - 25).toFixed(0)}px`);
-                kitty.style.setProperty('--ty-end', `${(Math.random() * 50 - 25).toFixed(0)}px`);
-                kitty.style.animationDelay = `-${(Math.random() * 10).toFixed(1)}s`;
-
-                const palette = bowPalettes[i % bowPalettes.length];
-                kitty.innerHTML = createKittySVG(palette[0], palette[1]);
-                kittyLayer.appendChild(kitty);
-            }
-        }
-
-        /**
-         * 2. MOTOR DE FUEGOS ARTIFICIALES INTERACTIVOS EN CANVAS
-         */
-        const canvas = document.getElementById('fireworksCanvas');
-        const ctx = canvas.getContext('2d');
-
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
-
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            populateBackground();
-        });
-
-        // Paleta de colores morados, violetas, lila, blanco y dorado
-        const fireworkColors = [
-            '#a855f7', // Violeta neón
-            '#c084fc', // Lila brillante
-            '#e9d5ff', // Lavanda claro
-            '#9333ea', // Púrpura intenso
-            '#ffd700', // Dorado chispa
-            '#ffffff', // Blanco puro
-            '#d946ef', // Fucsia violeta
-            '#8b5cf6'  // Índigo violeta
         ];
 
-        const rockets = [];
-        const particles = [];
+        const container = document.getElementById('scene-container');
+        const labelsLayer = document.getElementById('labels-layer');
+        const climaxOverlay = document.getElementById('climax-overlay');
+        const replayBtn = document.getElementById('replay-btn');
 
-        class Rocket {
-            constructor(startX, startY, targetX, targetY, forceHeart = false) {
-                this.x = startX;
-                this.y = startY;
-                this.targetX = targetX;
-                this.targetY = targetY;
-                this.color = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
-                this.forceHeart = forceHeart;
-                
-                // Calcular velocidad para alcanzar el objetivo suavemente
-                const angle = Math.atan2(targetY - startY, targetX - startX);
-                const distance = Math.hypot(targetX - startX, targetY - startY);
-                const speed = Math.max(7, Math.min(14, distance * 0.025));
-                
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed;
-                this.trail = [];
-                this.exploded = false;
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x12030e, 0.0021);
+
+        const camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1200);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.18;
+        container.appendChild(renderer.domElement);
+
+        function createRadialGlowTexture(innerColor, midColor, outerColor) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+            grad.addColorStop(0, innerColor);
+            grad.addColorStop(0.36, midColor);
+            grad.addColorStop(1, outerColor);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createRingTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 512, 0);
+            grad.addColorStop(0.0, 'rgba(255, 154, 213, 0.0)');
+            grad.addColorStop(0.18, 'rgba(255, 105, 180, 0.6)');
+            grad.addColorStop(0.35, 'rgba(253, 230, 138, 0.88)');
+            grad.addColorStop(0.48, 'rgba(31, 6, 24, 0.12)');
+            grad.addColorStop(0.58, 'rgba(255, 228, 243, 0.85)');
+            grad.addColorStop(0.82, 'rgba(255, 59, 154, 0.55)');
+            grad.addColorStop(1.0, 'rgba(255, 154, 213, 0.0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 64);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const glowSpriteTex = createRadialGlowTexture(
+            'rgba(255, 255, 255, 1)',
+            'rgba(255, 133, 208, 0.52)',
+            'rgba(0, 0, 0, 0)'
+        );
+
+        const nebulaSpriteTex = createRadialGlowTexture(
+            'rgba(255, 59, 154, 0.26)',
+            'rgba(131, 24, 67, 0.12)',
+            'rgba(0, 0, 0, 0)'
+        );
+
+        // Constructor de modelos 3D estilo Hello Kitty
+        function createKitty3DModel(options = {}) {
+            const {
+                scale = 1,
+                headColor = 0xffffff,
+                bowColor = 0xff3b9a,
+                bowCenterColor = 0xffb3da,
+                isSun = false
+            } = options;
+
+            const kitty = new THREE.Group();
+
+            const headMat = isSun
+                ? new THREE.MeshBasicMaterial({ color: 0xfff8fc })
+                : new THREE.MeshStandardMaterial({
+                    color: headColor,
+                    emissive: 0xff85d0,
+                    emissiveIntensity: 0.14,
+                    roughness: 0.38,
+                    metalness: 0.05
+                });
+
+            const innerEarMat = isSun
+                ? new THREE.MeshBasicMaterial({ color: 0xffb3da })
+                : new THREE.MeshStandardMaterial({
+                    color: 0xff9ad5,
+                    emissive: 0xff69b4,
+                    emissiveIntensity: 0.18,
+                    roughness: 0.45
+                });
+
+            const bowMat = isSun
+                ? new THREE.MeshBasicMaterial({ color: 0xfde68a })
+                : new THREE.MeshStandardMaterial({
+                    color: bowColor,
+                    emissive: bowColor,
+                    emissiveIntensity: 0.22,
+                    roughness: 0.32,
+                    metalness: 0.12
+                });
+
+            const bowCenterMat = isSun
+                ? new THREE.MeshBasicMaterial({ color: 0xff69b4 })
+                : new THREE.MeshStandardMaterial({
+                    color: bowCenterColor,
+                    emissive: bowCenterColor,
+                    emissiveIntensity: 0.2,
+                    roughness: 0.3
+                });
+
+            const eyeMat = new THREE.MeshStandardMaterial({
+                color: 0x1a0512,
+                roughness: 0.15,
+                metalness: 0.2
+            });
+
+            const noseMat = new THREE.MeshStandardMaterial({
+                color: 0xfacc15,
+                emissive: 0xf59e0b,
+                emissiveIntensity: 0.25,
+                roughness: 0.3
+            });
+
+            const whiskerMat = new THREE.MeshStandardMaterial({
+                color: 0x3b0724,
+                roughness: 0.4
+            });
+
+            // 1. Cabeza elipsoidal suave
+            const headGeo = new THREE.SphereGeometry(1, 32, 28);
+            const headMesh = new THREE.Mesh(headGeo, headMat);
+            headMesh.scale.set(1.24, 0.96, 0.92);
+            kitty.add(headMesh);
+
+            // 2. Dos orejitas redondeadas en la parte superior
+            const earGeo = new THREE.ConeGeometry(0.36, 0.68, 24);
+            const innerEarGeo = new THREE.ConeGeometry(0.2, 0.42, 20);
+
+            const leftEar = new THREE.Mesh(earGeo, headMat);
+            leftEar.position.set(-0.74, 0.86, 0.02);
+            leftEar.rotation.z = 0.44;
+            kitty.add(leftEar);
+
+            const leftInnerEar = new THREE.Mesh(innerEarGeo, innerEarMat);
+            leftInnerEar.position.set(-0.72, 0.84, 0.14);
+            leftInnerEar.rotation.z = 0.44;
+            kitty.add(leftInnerEar);
+
+            const rightEar = new THREE.Mesh(earGeo, headMat);
+            rightEar.position.set(0.74, 0.86, 0.02);
+            rightEar.rotation.z = -0.44;
+            kitty.add(rightEar);
+
+            const rightInnerEar = new THREE.Mesh(innerEarGeo, innerEarMat);
+            rightInnerEar.position.set(0.72, 0.84, 0.14);
+            rightInnerEar.rotation.z = -0.44;
+            kitty.add(rightInnerEar);
+
+            // 3. Ojitos ovalados negros brillantes y reflejo
+            const eyeGeo = new THREE.SphereGeometry(0.11, 16, 16);
+            const shineGeo = new THREE.SphereGeometry(0.032, 10, 10);
+            const shineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.scale.set(0.85, 1.32, 0.55);
+            leftEye.position.set(-0.46, -0.04, 0.87);
+            kitty.add(leftEye);
+
+            const leftShine = new THREE.Mesh(shineGeo, shineMat);
+            leftShine.position.set(-0.48, 0.01, 0.93);
+            kitty.add(leftShine);
+
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.scale.set(0.85, 1.32, 0.55);
+            rightEye.position.set(0.46, -0.04, 0.87);
+            kitty.add(rightEye);
+
+            const rightShine = new THREE.Mesh(shineGeo, shineMat);
+            rightShine.position.set(0.44, 0.01, 0.93);
+            kitty.add(rightShine);
+
+            // 4. Naricita amarilla/dorada ovalada
+            const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.115, 16, 16), noseMat);
+            noseMesh.scale.set(1.32, 0.86, 0.65);
+            noseMesh.position.set(0, -0.18, 0.91);
+            kitty.add(noseMesh);
+
+            // 5. Mejillas sonrojadas rosa pastel
+            const blushGeo = new THREE.SphereGeometry(0.13, 14, 14);
+            const blushMat = new THREE.MeshBasicMaterial({
+                color: 0xff85d0,
+                transparent: true,
+                opacity: 0.65
+            });
+            const leftBlush = new THREE.Mesh(blushGeo, blushMat);
+            leftBlush.scale.set(1.35, 0.78, 0.35);
+            leftBlush.position.set(-0.66, -0.22, 0.76);
+            kitty.add(leftBlush);
+
+            const rightBlush = new THREE.Mesh(blushGeo, blushMat);
+            rightBlush.scale.set(1.35, 0.78, 0.35);
+            rightBlush.position.set(0.66, -0.22, 0.76);
+            kitty.add(rightBlush);
+
+            // 6. Seis bigotes finos a los lados
+            const whiskerGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.42, 8);
+            const whiskerAngles = [0.22, 0, -0.22];
+            const whiskerY = [-0.04, -0.17, -0.30];
+
+            for (let i = 0; i < 3; i++) {
+                const lw = new THREE.Mesh(whiskerGeo, whiskerMat);
+                lw.position.set(-1.12, whiskerY[i], 0.46);
+                lw.rotation.z = Math.PI / 2 + whiskerAngles[i];
+                lw.rotation.y = -0.35;
+                kitty.add(lw);
+
+                const rw = new THREE.Mesh(whiskerGeo, whiskerMat);
+                rw.position.set(1.12, whiskerY[i], 0.46);
+                rw.rotation.z = Math.PI / 2 - whiskerAngles[i];
+                rw.rotation.y = 0.35;
+                kitty.add(rw);
             }
 
-            update() {
-                this.trail.push({ x: this.x, y: this.y });
-                if (this.trail.length > 6) this.trail.shift();
+            // 7. Moño 3D característico en la oreja izquierda (lado derecho al ver de frente)
+            const bowGroup = new THREE.Group();
+            bowGroup.position.set(0.68, 0.74, 0.42);
+            bowGroup.rotation.set(-0.15, 0.25, -0.42);
 
-                this.x += this.vx;
-                this.y += this.vy;
+            const wingGeo = new THREE.SphereGeometry(0.24, 18, 16);
+            const leftWing = new THREE.Mesh(wingGeo, bowMat);
+            leftWing.scale.set(1.25, 1.0, 0.62);
+            leftWing.position.set(-0.22, 0, 0);
+            bowGroup.add(leftWing);
 
-                // Ligera desaceleración
-                this.vx *= 0.985;
-                this.vy *= 0.985;
+            const rightWing = new THREE.Mesh(wingGeo, bowMat);
+            rightWing.scale.set(1.25, 1.0, 0.62);
+            rightWing.position.set(0.22, 0, 0);
+            bowGroup.add(rightWing);
 
-                const distToTarget = Math.hypot(this.targetX - this.x, this.targetY - this.y);
-                if (distToTarget < 18 || (Math.abs(this.vx) < 1.2 && Math.abs(this.vy) < 1.2)) {
-                    this.explode();
-                    this.exploded = true;
+            const knot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), bowCenterMat);
+            knot.scale.set(1.05, 1.05, 0.82);
+            knot.position.set(0, 0, 0.05);
+            bowGroup.add(knot);
+
+            kitty.add(bowGroup);
+            kitty.scale.setScalar(scale);
+            return kitty;
+        }
+
+        // Constructor de corazón 3D pequeño para satélite
+        function createHeartMesh(color = 0xff3b9a, size = 0.32) {
+            const shape = new THREE.Shape();
+            const x = 0, y = 0;
+            shape.moveTo(x, y + 0.35);
+            shape.bezierCurveTo(x, y + 0.35, x - 0.05, y, x - 0.35, y);
+            shape.bezierCurveTo(x - 0.75, y, x - 0.75, y + 0.52, x - 0.75, y + 0.52);
+            shape.bezierCurveTo(x - 0.75, y + 0.8, x - 0.45, y + 1.12, x, y + 1.38);
+            shape.bezierCurveTo(x + 0.45, y + 1.12, x + 0.75, y + 0.8, x + 0.75, y + 0.52);
+            shape.bezierCurveTo(x + 0.75, y + 0.52, x + 0.75, y, x + 0.35, y);
+            shape.bezierCurveTo(x + 0.15, y, x, y + 0.35, x, y + 0.35);
+
+            const geo = new THREE.ExtrudeGeometry(shape, {
+                depth: 0.28,
+                bevelEnabled: true,
+                bevelSegments: 3,
+                steps: 1,
+                bevelSize: 0.08,
+                bevelThickness: 0.08
+            });
+            geo.center();
+            const mesh = new THREE.Mesh(
+                geo,
+                new THREE.MeshStandardMaterial({
+                    color,
+                    emissive: color,
+                    emissiveIntensity: 0.35,
+                    roughness: 0.25
+                })
+            );
+            mesh.rotation.z = Math.PI;
+            mesh.scale.setScalar(size);
+            return mesh;
+        }
+
+        // Iluminación central cálida rosa-dorada
+        const sunLight = new THREE.PointLight(0xffe4f3, 2.7, 340, 1.05);
+        scene.add(sunLight);
+
+        const hemiLight = new THREE.HemisphereLight(0xffb3da, 0x3b0724, 0.95);
+        scene.add(hemiLight);
+
+        const universeGroup = new THREE.Group();
+        scene.add(universeGroup);
+
+        // 1. Sol-Kitty Central 3D
+        const sunGroup = new THREE.Group();
+        universeGroup.add(sunGroup);
+
+        const sunKittyModel = createKitty3DModel({
+            scale: 3.4,
+            isSun: true
+        });
+        sunGroup.add(sunKittyModel);
+
+        const sunCoronaInner = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+                map: glowSpriteTex,
+                color: 0xfde68a,
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })
+        );
+        sunCoronaInner.scale.set(27, 27, 1);
+        sunGroup.add(sunCoronaInner);
+
+        const sunCoronaOuter = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+                map: glowSpriteTex,
+                color: 0xff3b9a,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })
+        );
+        sunCoronaOuter.scale.set(60, 60, 1);
+        sunGroup.add(sunCoronaOuter);
+
+        // 2. Campo de estrellas rosas, blancas y doradas + nebulosas fucsia
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 2600;
+        const starPos = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        const colorChoices = [
+            new THREE.Color(0xffffff),
+            new THREE.Color(0xff9ad5),
+            new THREE.Color(0xff3b9a),
+            new THREE.Color(0xffd6ec),
+            new THREE.Color(0xfde68a)
+        ];
+
+        for (let i = 0; i < starCount; i++) {
+            const r = 140 + Math.random() * 380;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            starPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            starPos[i * 3 + 2] = r * Math.cos(phi);
+
+            const col = colorChoices[i % colorChoices.length];
+            starColors[i * 3] = col.r;
+            starColors[i * 3 + 1] = col.g;
+            starColors[i * 3 + 2] = col.b;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        const starField = new THREE.Points(
+            starGeo,
+            new THREE.PointsMaterial({
+                size: 1.5,
+                map: glowSpriteTex,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.92,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })
+        );
+        scene.add(starField);
+
+        const nebulaGroup = new THREE.Group();
+        scene.add(nebulaGroup);
+        const nebulaColors = [0xff3b9a, 0xd946ef, 0xff85d0, 0x9d174d, 0xf472b6];
+        for (let i = 0; i < 16; i++) {
+            const sprite = new THREE.Sprite(
+                new THREE.SpriteMaterial({
+                    map: nebulaSpriteTex,
+                    color: nebulaColors[i % nebulaColors.length],
+                    transparent: true,
+                    opacity: 0.45,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                })
+            );
+            const angle = (i / 16) * Math.PI * 2;
+            const dist = 75 + Math.random() * 95;
+            sprite.position.set(
+                Math.cos(angle) * dist,
+                (Math.random() - 0.5) * 45,
+                Math.sin(angle) * dist
+            );
+            const s = 95 + Math.random() * 85;
+            sprite.scale.set(s, s, 1);
+            nebulaGroup.add(sprite);
+        }
+
+        // 3. Galaxia espiral rosa pastel, fucsia y dorada
+        const galaxyCount = 4400;
+        const galaxyGeo = new THREE.BufferGeometry();
+        const galaxyPositions = new Float32Array(galaxyCount * 3);
+        const galaxyBasePositions = new Float32Array(galaxyCount * 3);
+        const galaxyColors = new Float32Array(galaxyCount * 3);
+
+        const cInside = new THREE.Color(0xfde68a);
+        const cMid = new THREE.Color(0xff9ad5);
+        const cOutside = new THREE.Color(0xff3b9a);
+        const branches = 4;
+
+        for (let i = 0; i < galaxyCount; i++) {
+            const radius = 12 + Math.pow(Math.random(), 1.35) * 125;
+            const branchAngle = ((i % branches) / branches) * Math.PI * 2;
+            const spinAngle = radius * 0.042;
+
+            const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * (radius * 0.18);
+            const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * (2.5 + radius * 0.05);
+            const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * (radius * 0.18);
+
+            const bx = Math.cos(branchAngle + spinAngle) * radius + randomX;
+            const by = randomY;
+            const bz = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+            galaxyBasePositions[i * 3] = bx;
+            galaxyBasePositions[i * 3 + 1] = by;
+            galaxyBasePositions[i * 3 + 2] = bz;
+
+            const mixedColor = cInside.clone();
+            if (radius < 52) {
+                mixedColor.lerp(cMid, radius / 52);
+            } else {
+                mixedColor.copy(cMid).lerp(cOutside, (radius - 52) / 85);
+            }
+
+            galaxyColors[i * 3] = mixedColor.r;
+            galaxyColors[i * 3 + 1] = mixedColor.g;
+            galaxyColors[i * 3 + 2] = mixedColor.b;
+        }
+
+        galaxyGeo.setAttribute('position', new THREE.BufferAttribute(galaxyPositions, 3));
+        galaxyGeo.setAttribute('color', new THREE.BufferAttribute(galaxyColors, 3));
+
+        const galaxyPoints = new THREE.Points(
+            galaxyGeo,
+            new THREE.PointsMaterial({
+                size: 1.4,
+                map: glowSpriteTex,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.88,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })
+        );
+        universeGroup.add(galaxyPoints);
+
+        // 4. Cinturón de destellos estelares rosa pastel entre órbitas
+        const sparkleCount = 320;
+        const sparkleDummy = new THREE.Object3D();
+        const sparkleInstanced = new THREE.InstancedMesh(
+            new THREE.OctahedronGeometry(0.24, 0),
+            new THREE.MeshBasicMaterial({ color: 0xffb3da }),
+            sparkleCount
+        );
+        const sparkleData = [];
+        for (let i = 0; i < sparkleCount; i++) {
+            sparkleData.push({
+                radius: 43.5 + Math.random() * 3.8,
+                angle: Math.random() * Math.PI * 2,
+                yOffset: (Math.random() - 0.5) * 1.4,
+                speed: 0.16 + Math.random() * 0.08,
+                scale: 0.5 + Math.random() * 1.0,
+                rotSpeed: Math.random() * 0.04
+            });
+        }
+        universeGroup.add(sparkleInstanced);
+
+        // 5. Creación de los 8 Planetas Kitty en 3D + Órbitas + Etiquetas
+        const planetEntities = [];
+
+        function buildPlanets() {
+            planetEntities.forEach(p => universeGroup.remove(p.pivot));
+            planetEntities.length = 0;
+            labelsLayer.innerHTML = '';
+
+            PLANETS_DATA.forEach((data, idx) => {
+                const pivot = new THREE.Group();
+                universeGroup.add(pivot);
+
+                const orbitPoints = [];
+                const segments = 128;
+                for (let s = 0; s <= segments; s++) {
+                    const theta = (s / segments) * Math.PI * 2;
+                    orbitPoints.push(new THREE.Vector3(Math.cos(theta) * data.orbitRadius, 0, Math.sin(theta) * data.orbitRadius));
                 }
-            }
+                const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+                const orbitMat = new THREE.LineBasicMaterial({
+                    color: 0xff85d0,
+                    transparent: true,
+                    opacity: 0
+                });
+                const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+                pivot.add(orbitLine);
 
-            draw() {
-                ctx.save();
-                for (let i = 0; i < this.trail.length; i++) {
-                    const point = this.trail[i];
-                    const alpha = (i + 1) / this.trail.length;
-                    ctx.beginPath();
-                    ctx.arc(point.x, point.y, 2.5 * alpha, 0, Math.PI * 2);
-                    ctx.fillStyle = this.color;
-                    ctx.globalAlpha = alpha * 0.8;
-                    ctx.fill();
+                const planetHolder = new THREE.Group();
+                planetHolder.scale.set(0.001, 0.001, 0.001);
+                pivot.add(planetHolder);
+
+                // Modelo 3D de cabecita Kitty
+                const kittyModel = createKitty3DModel({
+                    scale: data.size,
+                    headColor: data.headTint,
+                    bowColor: data.bowColor,
+                    bowCenterColor: data.bowCenter,
+                    isSun: false
+                });
+                planetHolder.add(kittyModel);
+
+                // Aura rosa luminosa alrededor del planeta Kitty
+                const atmoSprite = new THREE.Sprite(
+                    new THREE.SpriteMaterial({
+                        map: glowSpriteTex,
+                        color: data.atmosphere,
+                        transparent: true,
+                        opacity: 0.58,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                atmoSprite.scale.set(data.size * 4.2, data.size * 4.2, 1);
+                planetHolder.add(atmoSprite);
+
+                // Anillos brillantes estilo Saturno alrededor del gatito
+                if (data.hasRings) {
+                    const ringGeo = new THREE.RingGeometry(data.size * 1.65, data.size * 2.95, 64);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        map: createRingTexture(),
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.92,
+                        depthWrite: false
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    ringMesh.rotation.x = Math.PI / 2.35;
+                    ringMesh.rotation.y = 0.2;
+                    planetHolder.add(ringMesh);
                 }
-                ctx.restore();
-            }
 
-            explode() {
-                // 35% de probabilidad (o forzado al tocar) de explosión en forma de corazón
-                const isHeart = this.forceHeart || Math.random() < 0.35;
-                const secondaryColor = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
+                // Mini satélite-corazón orbitando
+                let heartMoon = null;
+                if (data.hasHeartMoon) {
+                    heartMoon = createHeartMesh(0xff3b9a, 0.42);
+                    planetHolder.add(heartMoon);
+                }
 
-                if (isHeart) {
-                    const count = 48;
-                    const scale = Math.random() * 0.14 + 0.16;
-                    for (let i = 0; i < count; i++) {
-                        const t = (Math.PI * 2 * i) / count;
-                        // Ecuación paramétrica de un corazón
-                        const hx = 16 * Math.pow(Math.sin(t), 3);
-                        const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-                        
-                        const color = i % 2 === 0 ? this.color : secondaryColor;
-                        particles.push(new Particle(this.x, this.y, hx * scale, hy * scale, color, true));
+                // Corona de estrellitas orbitando
+                let starCrownGroup = null;
+                if (data.hasStarCrown) {
+                    starCrownGroup = new THREE.Group();
+                    const starMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
+                    const starGeoMini = new THREE.OctahedronGeometry(0.24, 0);
+                    for (let s = 0; s < 6; s++) {
+                        const st = new THREE.Mesh(starGeoMini, starMat);
+                        const ang = (s / 6) * Math.PI * 2;
+                        st.position.set(Math.cos(ang) * (data.size * 1.65), data.size * 1.25, Math.sin(ang) * (data.size * 1.65));
+                        starCrownGroup.add(st);
                     }
-                } else {
-                    const count = 55;
-                    for (let i = 0; i < count; i++) {
-                        const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.15);
-                        const speed = Math.random() * 4.5 + 1.8;
-                        const vx = Math.cos(angle) * speed;
-                        const vy = Math.sin(angle) * speed;
-                        const color = i % 3 === 0 ? '#ffd700' : (i % 2 === 0 ? this.color : secondaryColor);
-                        particles.push(new Particle(this.x, this.y, vx, vy, color, false));
-                    }
-                }
-            }
-        }
-
-        class Particle {
-            constructor(x, y, vx, vy, color, isHeartPart) {
-                this.x = x;
-                this.y = y;
-                this.vx = vx;
-                this.vy = vy;
-                this.color = color;
-                this.alpha = 1;
-                this.decay = Math.random() * 0.014 + 0.012;
-                this.gravity = isHeartPart ? 0.025 : 0.055;
-                this.friction = 0.96;
-                this.size = Math.random() * 2.5 + 1.8;
-                this.sparkle = Math.random() < 0.4;
-            }
-
-            update() {
-                this.vx *= this.friction;
-                this.vy *= this.friction;
-                this.vy += this.gravity;
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= this.decay;
-            }
-
-            draw() {
-                if (this.alpha <= 0) return;
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                
-                // Efecto de destello intermitente
-                if (this.sparkle && Math.random() < 0.3) {
-                    ctx.fillStyle = '#ffffff';
-                } else {
-                    ctx.fillStyle = this.color;
+                    planetHolder.add(starCrownGroup);
                 }
 
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = this.color;
+                // Etiqueta flotante con cualidad
+                const labelEl = document.createElement('div');
+                labelEl.className = 'planet-label';
+                labelEl.innerHTML = `
+                    <div class="quality-badge">${data.quality}</div>
+                    <div class="planet-connector"></div>
+                `;
+                labelsLayer.appendChild(labelEl);
 
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
+                planetEntities.push({
+                    data,
+                    index: idx,
+                    pivot,
+                    orbitLine,
+                    orbitMat,
+                    planetHolder,
+                    kittyModel,
+                    heartMoon,
+                    starCrownGroup,
+                    labelEl,
+                    angle: data.startAngle,
+                    spawnTime: 1.5 + idx * 1.55,
+                    progress: 0
+                });
+            });
+        }
+
+        // 6. Ondas expansivas rosas y corazones/estrellas fugaces
+        const pulseWaves = [];
+        function spawnPulseWave(pos, maxScale = 45, color = 0xff85d0) {
+            const sprite = new THREE.Sprite(
+                new THREE.SpriteMaterial({
+                    map: glowSpriteTex,
+                    color,
+                    transparent: true,
+                    opacity: 0.92,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                })
+            );
+            sprite.position.copy(pos);
+            sprite.scale.set(2, 2, 1);
+            universeGroup.add(sprite);
+            pulseWaves.push({ sprite, age: 0, maxAge: 1.25, maxScale });
+        }
+
+        const shootingStars = [];
+        function spawnShootingStar() {
+            const group = new THREE.Group();
+            const tailGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(-12, 3, -6)
+            ]);
+            const tailMat = new THREE.LineBasicMaterial({
+                color: 0xff9ad5,
+                transparent: true,
+                opacity: 0.95
+            });
+            group.add(new THREE.Line(tailGeo, tailMat));
+
+            const headHeart = createHeartMesh(0xff3b9a, 0.45);
+            group.add(headHeart);
+
+            group.position.set(
+                (Math.random() - 0.5) * 180,
+                25 + Math.random() * 55,
+                (Math.random() - 0.5) * 180
+            );
+            const vel = new THREE.Vector3(
+                (Math.random() - 0.5) * 140,
+                -25 - Math.random() * 25,
+                (Math.random() - 0.5) * 140
+            );
+            scene.add(group);
+            shootingStars.push({ group, tailMat, vel, life: 1.0 });
+        }
+
+        let simStartTime = performance.now();
+        let hasStarted = false;
+        let climaxShown = false;
+
+        let userYaw = 0;
+        let userPitch = 0;
+        let userZoomOffset = 0;
+        let isDragging = false;
+        let prevPointer = { x: 0, y: 0 };
+        let dragDistance = 0;
+        let initialPinchDist = null;
+
+        function startExperience() {
+            simStartTime = performance.now();
+            hasStarted = true;
+            climaxShown = false;
+            userYaw = 0;
+            userPitch = 0;
+            userZoomOffset = 0;
+
+            climaxOverlay.classList.remove('show');
+            replayBtn.classList.remove('visible');
+
+            buildPlanets();
+            spawnPulseWave(new THREE.Vector3(0, 0, 0), 80, 0xff69b4);
+        }
+
+        buildPlanets();
+        setTimeout(() => {
+            if (!hasStarted) startExperience();
+        }, 1100);
+
+        container.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            dragDistance = 0;
+            prevPointer.x = e.clientX;
+            prevPointer.y = e.clientY;
+            if (!hasStarted) startExperience();
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging || initialPinchDist !== null) return;
+            const dx = e.clientX - prevPointer.x;
+            const dy = e.clientY - prevPointer.y;
+            dragDistance += Math.hypot(dx, dy);
+            userYaw -= dx * 0.0055;
+            userPitch = Math.max(-0.55, Math.min(0.65, userPitch + dy * 0.0045));
+            prevPointer.x = e.clientX;
+            prevPointer.y = e.clientY;
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            if (isDragging && dragDistance < 8 && initialPinchDist === null) {
+                const raycaster = new THREE.Raycaster();
+                const mouse = new THREE.Vector2(
+                    (e.clientX / window.innerWidth) * 2 - 1,
+                    -(e.clientY / window.innerHeight) * 2 + 1
+                );
+                raycaster.setFromCamera(mouse, camera);
+                const targetPt = new THREE.Vector3();
+                raycaster.ray.at(55, targetPt);
+                spawnPulseWave(targetPt, 35, 0xff3b9a);
+                spawnShootingStar();
             }
-        }
+            isDragging = false;
+        });
 
-        // Lanzar un cohete hacia coordenadas específicas
-        function launchFirework(targetX, targetY, forceHeart = false) {
-            const startX = width * (0.2 + Math.random() * 0.6);
-            const startY = height + 10;
-            rockets.push(new Rocket(startX, startY, targetX, targetY, forceHeart));
-        }
+        // Soporte táctil de pellizco (pinch-to-zoom) en móviles
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialPinchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        }, { passive: true });
 
-        // Bucle principal de animación
-        let lastAutoLaunch = 0;
-        function animate(timestamp) {
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && initialPinchDist !== null) {
+                const currentDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const delta = initialPinchDist - currentDist;
+                userZoomOffset = Math.max(-45, Math.min(65, userZoomOffset + delta * 0.18));
+                initialPinchDist = currentDist;
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchend', () => {
+            initialPinchDist = null;
+        }, { passive: true });
+
+        container.addEventListener('wheel', (e) => {
+            userZoomOffset = Math.max(-45, Math.min(65, userZoomOffset + e.deltaY * 0.05));
+        }, { passive: true });
+
+        replayBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startExperience();
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const tempVec = new THREE.Vector3();
+        let lastFrameTime = performance.now();
+
+        function animate(now) {
             requestAnimationFrame(animate);
 
-            // Limpiar con estela suave para dar efecto de brillo prolongado
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
-            ctx.fillRect(0, 0, width, height);
-            ctx.globalCompositeOperation = 'lighter';
+            const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
 
-            // Lanzamiento automático periódico
-            if (timestamp - lastAutoLaunch > 850) {
-                const rx = width * (0.12 + Math.random() * 0.76);
-                const ry = height * (0.12 + Math.random() * 0.55);
-                launchFirework(rx, ry, false);
-                lastAutoLaunch = timestamp;
+            const elapsed = hasStarted ? (now - simStartTime) / 1000 : 0;
+
+            // 1. Expansión de la galaxia rosa
+            const galaxyExpansion = hasStarted
+                ? Math.min(1, 1 - Math.pow(1 - Math.min(1, elapsed / 14.5), 2.4))
+                : 0.04;
+
+            const posAttr = galaxyGeo.attributes.position;
+            for (let i = 0; i < galaxyCount; i++) {
+                posAttr.array[i * 3] = galaxyBasePositions[i * 3] * galaxyExpansion;
+                posAttr.array[i * 3 + 1] = galaxyBasePositions[i * 3 + 1] * galaxyExpansion;
+                posAttr.array[i * 3 + 2] = galaxyBasePositions[i * 3 + 2] * galaxyExpansion;
+            }
+            posAttr.needsUpdate = true;
+            galaxyPoints.rotation.y += dt * 0.045;
+
+            // 2. Pulso y balanceo tierno del Sol-Kitty central
+            const sunPulse = 1 + Math.sin(now * 0.0038) * 0.06;
+            sunKittyModel.scale.setScalar(3.4 * sunPulse);
+            sunKittyModel.rotation.y = Math.sin(now * 0.0012) * 0.35;
+            sunKittyModel.rotation.z = Math.sin(now * 0.002) * 0.06;
+            sunCoronaInner.scale.set(27 * sunPulse, 27 * sunPulse, 1);
+            sunCoronaOuter.scale.set(60 * sunPulse, 60 * sunPulse, 1);
+
+            // 3. Cinturón de destellos rosas
+            const beltVisibility = Math.max(0, Math.min(1, (elapsed - 6.5) / 2.5));
+            for (let i = 0; i < sparkleCount; i++) {
+                const a = sparkleData[i];
+                a.angle += a.speed * dt;
+                const r = a.radius * (0.2 + 0.8 * beltVisibility);
+                sparkleDummy.position.set(Math.cos(a.angle) * r, a.yOffset, Math.sin(a.angle) * r);
+                sparkleDummy.rotation.x += a.rotSpeed;
+                sparkleDummy.rotation.y += a.rotSpeed;
+                const s = a.scale * beltVisibility;
+                sparkleDummy.scale.set(s, s, s);
+                sparkleDummy.updateMatrix();
+                sparkleInstanced.setMatrixAt(i, sparkleDummy.matrix);
+            }
+            sparkleInstanced.instanceMatrix.needsUpdate = true;
+
+            // 4. Actualización de los 8 Planetas Kitty y sus etiquetas
+            const isMobile = window.innerWidth < 640;
+            const mobileDistFactor = isMobile ? 1.28 : 1.0;
+
+            planetEntities.forEach((p) => {
+                p.angle += p.data.speed * dt;
+
+                // Balanceo kawaii mirando suavemente hacia afuera/cámara mientras rota
+                p.kittyModel.rotation.y = -p.angle + Math.PI / 2 + Math.sin(now * 0.0025 + p.index) * 0.28;
+                p.kittyModel.rotation.z = Math.sin(now * 0.003 + p.index) * 0.07;
+
+                if (hasStarted && elapsed >= p.spawnTime) {
+                    const justSpawned = p.progress === 0;
+                    p.progress = Math.min(1, p.progress + dt * 0.85);
+                    const ease = 1 - Math.pow(1 - p.progress, 3);
+
+                    const currentRadius = p.data.orbitRadius * (0.15 + 0.85 * ease);
+                    const px = Math.cos(p.angle) * currentRadius;
+                    const pz = Math.sin(p.angle) * currentRadius;
+
+                    p.planetHolder.position.set(px, 0, pz);
+                    p.planetHolder.scale.setScalar(Math.max(0.001, ease));
+                    p.orbitMat.opacity = ease * 0.28;
+
+                    if (justSpawned) {
+                        spawnPulseWave(new THREE.Vector3(px, 0, pz), 20, 0xff85d0);
+                    }
+
+                    if (p.heartMoon) {
+                        const mAngle = now * 0.0026;
+                        p.heartMoon.position.set(Math.cos(mAngle) * 3.1, 0.35, Math.sin(mAngle) * 3.1);
+                        p.heartMoon.rotation.y += dt * 2.2;
+                    }
+
+                    if (p.starCrownGroup) {
+                        p.starCrownGroup.rotation.y += dt * 1.4;
+                    }
+
+                    p.planetHolder.getWorldPosition(tempVec);
+                    tempVec.y += p.data.size * 1.45 + 1.25;
+                    tempVec.project(camera);
+
+                    if (tempVec.z < 1) {
+                        const x = (tempVec.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (-tempVec.y * 0.5 + 0.5) * window.innerHeight;
+                        const depthScale = Math.max(0.72, Math.min(1.12, 1.15 - tempVec.z * 0.25));
+
+                        p.labelEl.style.opacity = Math.min(0.96, ease * 1.3).toFixed(2);
+                        p.labelEl.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%) scale(${(ease * depthScale).toFixed(3)})`;
+                        p.labelEl.style.zIndex = Math.round((1 - tempVec.z) * 100);
+
+                        if (elapsed - p.spawnTime < 1.8) {
+                            p.labelEl.classList.add('active-focus');
+                        } else {
+                            p.labelEl.classList.remove('active-focus');
+                        }
+                    } else {
+                        p.labelEl.style.opacity = '0';
+                    }
+                } else {
+                    p.planetHolder.scale.setScalar(0.001);
+                    p.orbitMat.opacity = 0;
+                    p.labelEl.style.opacity = '0';
+                }
+            });
+
+            // 5. Viaje de cámara 3D
+            const camT = hasStarted ? Math.min(1, elapsed / 15.5) : 0;
+            const camEase = 1 - Math.pow(1 - camT, 2.5);
+
+            const baseDist = (26 + camEase * 124) * mobileDistFactor + userZoomOffset;
+            const autoOrbitAngle = elapsed * 0.11 + userYaw;
+            const elevationAngle = 0.24 + camEase * 0.28 + userPitch;
+
+            const targetCamX = Math.sin(autoOrbitAngle) * Math.cos(elevationAngle) * baseDist;
+            const targetCamY = Math.sin(elevationAngle) * baseDist;
+            const targetCamZ = Math.cos(autoOrbitAngle) * Math.cos(elevationAngle) * baseDist;
+
+            camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.06);
+            camera.lookAt(0, camEase * -4, 0);
+
+            // 6. Clímax final
+            if (hasStarted && elapsed >= 14.2 && !climaxShown) {
+                climaxShown = true;
+                climaxOverlay.classList.add('show');
+                replayBtn.classList.add('visible');
+                spawnPulseWave(new THREE.Vector3(0, 0, 0), 120, 0xff69b4);
+                spawnShootingStar();
+                setTimeout(spawnShootingStar, 450);
             }
 
-            // Actualizar y dibujar cohetes
-            for (let i = rockets.length - 1; i >= 0; i--) {
-                rockets[i].update();
-                rockets[i].draw();
-                if (rockets[i].exploded) {
-                    rockets.splice(i, 1);
+            if (hasStarted && Math.random() < 0.013) {
+                spawnShootingStar();
+            }
+
+            for (let i = pulseWaves.length - 1; i >= 0; i--) {
+                const pw = pulseWaves[i];
+                pw.age += dt;
+                const ratio = pw.age / pw.maxAge;
+                if (ratio >= 1) {
+                    universeGroup.remove(pw.sprite);
+                    pulseWaves.splice(i, 1);
+                } else {
+                    const s = 2 + ratio * pw.maxScale;
+                    pw.sprite.scale.set(s, s, 1);
+                    pw.sprite.material.opacity = (1 - ratio) * 0.78;
                 }
             }
 
-            // Actualizar y dibujar partículas
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw();
-                if (particles[i].alpha <= 0) {
-                    particles.splice(i, 1);
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const ss = shootingStars[i];
+                ss.life -= dt * 1.1;
+                ss.group.position.addScaledVector(ss.vel, dt);
+                ss.tailMat.opacity = Math.max(0, ss.life);
+                if (ss.life <= 0) {
+                    scene.remove(ss.group);
+                    shootingStars.splice(i, 1);
                 }
             }
+
+            starField.rotation.y += dt * 0.008;
+            nebulaGroup.rotation.y -= dt * 0.012;
+
+            renderer.render(scene, camera);
         }
 
-        /**
-         * 3. INTERACTIVIDAD AL HACER CLIC O TOCAR LA PANTALLA
-         */
-        function handleInteraction(clientX, clientY) {
-            // Lanza un fuego artificial directo donde tocó el usuario
-            launchFirework(clientX, clientY, true);
-            // Lanza un segundo fuego artificial de acompañamiento cerca
-            const offsetX = clientX + (Math.random() * 140 - 70);
-            const offsetY = Math.max(60, clientY - (Math.random() * 80 + 20));
-            setTimeout(() => launchFirework(offsetX, offsetY, false), 120);
-        }
-
-        canvas.addEventListener('pointerdown', (e) => {
-            handleInteraction(e.clientX, e.clientY);
-        });
-
-        // Al tocar la tarjeta central también lanza una ráfaga celebratoria alrededor
-        const mainCard = document.getElementById('mainCard');
-        mainCard.addEventListener('click', (e) => {
-            const rect = mainCard.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-
-            launchFirework(centerX - 110, Math.max(80, centerY - 130), true);
-            setTimeout(() => launchFirework(centerX + 110, Math.max(80, centerY - 130), true), 150);
-            setTimeout(() => launchFirework(centerX, Math.max(60, centerY - 170), false), 300);
-        });
-
-        // Inicialización al cargar la página
         window.onload = function () {
-            populateBackground();
-            // Ráfaga inicial de bienvenida
-            setTimeout(() => launchFirework(width * 0.28, height * 0.28, true), 200);
-            setTimeout(() => launchFirework(width * 0.72, height * 0.28, true), 450);
-            setTimeout(() => launchFirework(width * 0.5, height * 0.2, false), 700);
             requestAnimationFrame(animate);
         };
     </script>
